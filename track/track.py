@@ -42,7 +42,7 @@ class ClientState(object):
         return self.status == self.ERROR
 
 class Track(object):
-    def __init__(self, region, uri=None):
+    def __init__(self, region, uri=None, transport_cls=HTTPTransport):
         self.region = region
         self.uri_base = uri or 'http://localhost:6062/api/1.0/track/'
         self.max_retries = 3
@@ -55,7 +55,7 @@ class Track(object):
         self.error_logger = logging.getLogger('track.errors')
 
         # TODO: Read dynamic
-        self._transport = ThreadedHTTPTransport(timeout=self.timeout)
+        self._transport = transport_cls(timeout=self.timeout)
 
     def configure_logging(self):
         logger = logging.getLogger('track')
