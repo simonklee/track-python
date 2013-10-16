@@ -14,14 +14,12 @@ try:
 except ImportError:
     pass
 
-import track
-
 def run_setup(with_binary):
     features = {}
 
     setup(
         name='track-python',
-        version=track.__version__,
+        version=['0.1.2'],
         license='MIT',
         url='https://github.com/simonz05/track-python/',
         author='Simon Zimmermann',
