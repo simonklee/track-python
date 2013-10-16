@@ -42,9 +42,9 @@ class ClientState(object):
         return self.status == self.ERROR
 
 class Track(object):
-    def __init__(self, region, uri_base=None):
+    def __init__(self, region, uri=None):
         self.region = region
-        self.uri_base = uri_base or 'http://localhost:6062/api/1.0/track/'
+        self.uri_base = uri or 'http://localhost:6062/api/1.0/track/'
         self.max_retries = 3
         self.timeout = 1.0
         self.state = ClientState()
