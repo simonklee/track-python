@@ -1,0 +1,9 @@
+build/
+dist/
+ve/
+*.pyc
+*.egg-info/
+*.egg/
+.coverage
+.tox
+pkg/_speedups.so
