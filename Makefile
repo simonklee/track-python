@@ -6,7 +6,7 @@ clean-pyc:
 	find . -name '*~' -exec rm -f {} +
 
 test:
-	@nosetests -w tests
+	@nosetests -s -w tests
 
 test_setup:
 	@python scripts/test_setup.py

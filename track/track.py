@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 
 import time
+import logging
 
 from .compat import _urlparse, HTTPError
-from .transport import HTTPTransport
+from .transport import HTTPTransport, ThreadedHTTPTransport
+
+logger = logging.getLogger('track')
 
 class ClientState(object):
     ONLINE = 1
@@ -46,8 +49,22 @@ class Track(object):
         self.timeout = 1.0
         self.state = ClientState()
 
+        self.configure_logging()
+        cls = self.__class__
+        self.logger = logging.getLogger('%s.%s' % (cls.__module__, cls.__name__))
+        self.error_logger = logging.getLogger('track.errors')
+
         # TODO: Read dynamic
-        self._transport = HTTPTransport(timeout=self.timeout)
+        self._transport = ThreadedHTTPTransport(timeout=self.timeout)
+
+    def configure_logging(self):
+        logger = logging.getLogger('track')
+
+        if logger.handlers:
+            return
+
+        logger.addHandler(logging.StreamHandler())
+        logger.setLevel(logging.INFO)
 
     def purchase(self, profile_id, currency, gross_amount, net_amount, payment_provider, product):
         data = {
@@ -107,29 +124,24 @@ class Track(object):
     def _failed_send(self, e, url, data):
         if isinstance(e, HTTPError):
             body = e.read()
-            print body
-        #    self.error_logger.error(
-        #    'Unable to reach Sentry log server: %s (url: %s, body: %s)',
-        #    e, url, body, exc_info=True,
-        #    extra={'data': {'body': body[:200], 'remote_url': url}})
-        #else:
-        #    self.error_logger.error(
-        #    'Unable to reach Sentry log server: %s (url: %s)', e, url,
-        #    exc_info=True, extra={'data': {'remote_url': url}})
+            self.error_logger.error(
+            'Unable to reach track server: %s (url: %s, body: %s)',
+            e, url, body, exc_info=True,
+            extra={'data': {'body': body[:200], 'remote_url': url}})
+        else:
+            self.error_logger.error(
+            'Unable to reach track server: %s (url: %s)', e, url,
+            exc_info=True, extra={'data': {'remote_url': url}})
 
-        #message = self._get_log_message(data)
-        #self.error_logger.error('Failed to submit message: %r', message)
-        print e
+        self.error_logger.error('Failed to submit event: %s', url)
         self.state.set_fail()
 
     def send_remote(self, endpoint, data, headers={}):
-        if not self.state.should_try():
-            print 'should not try'
-            #message = self._get_log_message(data)
-            #self.error_logger.error(message)
-            return
+        uri = _urlparse.urljoin(self.uri_base, endpoint)
 
-        uri = _urlparse.urljoin(self.uri, endpoint)
+        if not self.state.should_try():
+            self.error_logger.error('Failed to submit event: %s', uri)
+            return
 
         def failed_send(e):
             self._failed_send(e, uri, data)
