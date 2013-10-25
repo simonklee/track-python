@@ -9,7 +9,7 @@
     :license: MIT, see LICENSE for details.
 """
 
-__version__ = '0.1.1'
+__version__ = '0.1.3'
 __all__ = ['Track']
 
 from .track import Track
